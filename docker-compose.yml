@@ -1,4 +1,15 @@
 services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: kafka_demo
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d:ro
+
   kafka:
     image: bitnami/kafka:latest
     container_name: kafka
@@ -15,6 +26,8 @@ services:
       - ALLOW_PLAINTEXT_LISTENER=yes
     volumes:
       - kafka_data:/bitnami/kafka
+    depends_on:
+      - mysql
 
   producer:
     build:
@@ -27,8 +40,11 @@ services:
     build:
       context: .
       dockerfile: consumer/Dockerfile
+    restart: on-failure
     depends_on:
+      - kafka
       - producer
 
 volumes:
   kafka_data:
+  mysql_data:
